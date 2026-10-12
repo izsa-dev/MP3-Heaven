@@ -1,0 +1,182 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: youtube
+    description: Public metadata for supported YouTube video URLs
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /youtube/metadata:
+    get:
+      operationId: getYoutubeMetadata
+      tags: [youtube]
+      summary: Get public metadata for a YouTube video
+      description: Returns a video's public title, channel name, thumbnail, and embeddable player URL. Does not fetch or download video or audio media.
+      parameters:
+        - name: url
+          in: query
+          required: true
+          description: A supported YouTube video URL
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 2048
+      responses:
+        "200":
+          description: Public video metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YoutubeMetadata"
+        "400":
+          description: Invalid or unsupported video URL
+        "404":
+          description: Video metadata is unavailable
+  /youtube/search:
+    get:
+      operationId: searchYoutubeVideos
+      tags: [youtube]
+      summary: Search public YouTube videos
+      description: Returns metadata for a small set of public YouTube search results without downloading media.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search phrase or title
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 120
+      responses:
+        "200":
+          description: Matching video metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YoutubeSearchResponse"
+        "400":
+          description: Invalid search phrase
+        "502":
+          description: YouTube search is temporarily unavailable
+  /youtube/audio:
+    post:
+      operationId: downloadYoutubeAudio
+      tags: [youtube]
+      summary: Download authorized YouTube audio as an MP3
+      description: Extracts one user-authorized public video as an MP3 at 160 kbps, with metadata and thumbnail embedded. Playlists and other hosts are rejected.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/YoutubeAudioDownloadInput"
+      responses:
+        "200":
+          description: MP3 audio file
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Invalid video URL or missing rights confirmation
+        "404":
+          description: Video is unavailable
+        "422":
+          description: The video could not be converted
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    YoutubeMetadata:
+      type: object
+      properties:
+        videoId:
+          type: string
+        title:
+          type: string
+        authorName:
+          type: string
+        thumbnailUrl:
+          type: string
+          format: uri
+        embedUrl:
+          type: string
+          format: uri
+      required:
+        - videoId
+        - title
+        - authorName
+        - thumbnailUrl
+        - embedUrl
+    YoutubeSearchResult:
+      type: object
+      properties:
+        videoId:
+          type: string
+        title:
+          type: string
+        authorName:
+          type: string
+        thumbnailUrl:
+          type: string
+          format: uri
+        embedUrl:
+          type: string
+          format: uri
+        durationSeconds:
+          type: [integer, "null"]
+      required:
+        - videoId
+        - title
+        - authorName
+        - thumbnailUrl
+        - embedUrl
+        - durationSeconds
+    YoutubeSearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/YoutubeSearchResult"
+      required:
+        - results
+    YoutubeAudioDownloadInput:
+      type: object
+      properties:
+        url:
+          type: string
+          minLength: 1
+          maxLength: 2048
+        rightsConfirmed:
+          type: boolean
+      required:
+        - url
+        - rightsConfirmed
+

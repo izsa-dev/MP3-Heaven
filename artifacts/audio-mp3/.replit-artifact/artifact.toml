@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Audio MP3"
+description = "A mobile-first Spanish audio conversion tool for turning user-owned or licensed audio files into 160 kbps MP3s, with optional YouTube metadata and thumbnail previews, plus single-item and batch queues."
+version = "1.0.0"
+id = "artifacts/audio-mp3"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20410
+
+[services.development]
+run = "pnpm --filter @workspace/audio-mp3 run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/audio-mp3", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/audio-mp3/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20410"
+BASE_PATH = "/"
