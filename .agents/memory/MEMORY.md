@@ -1,0 +1,1 @@
+- [YouTube extraction limits](youtube-extraction-limits.md) — YouTube may challenge Replit-hosted yt-dlp requests; surface errors clearly and never ask for browser cookies.
